@@ -1,8 +1,11 @@
 
 let boids = [];
-let N = 1000;
-let distanceFlock = 5;
+let N = 500;
+let distanceFlock = 0.3;
 let maxSpeed = 2;
+let cohesion = 100;
+let matchVelocityParam = 100
+let colors = ["red", "green", "purple"]
 
 class Vector {
 
@@ -57,6 +60,9 @@ class Boid {
         let vy = Math.random() * (Math.random() > 0.5 ? 1 : -1) / 100;
 
         this.velocity = new Vector(vx, vy);
+
+        this.leader = false;
+        this.color = colors[Math.ceil(Math.random() * 3) - 1]
     }
 
     move(v) {
@@ -75,7 +81,7 @@ class Boid {
 
 function createBoids() {
     for (let i = 0; i < N; i++) {
-        boids.push(new Boid());
+          boids.push(new Boid());
     }
     /*let b = new Boid();
     b.position = new Vector(100, 100);
@@ -100,7 +106,8 @@ function setup() {
 
 function drawBoids() {
     boids.forEach((b, i) => {
-        console.log("Boid " + i + " x:" + b.position.x + " y:" + b.position.y)
+        //console.log("Boid " + i + " x:" + b.position.x + " y:" + b.position.y)
+        stroke(b.color)
         point(b.position.x, b.position.y);
     })
 }
@@ -117,7 +124,7 @@ function rule1CenterMass(boid) {
 
     
     pc = pc.div(N - 1);
-    pc = pc.sub(boid.position).div(100);
+    pc = pc.sub(boid.position).div(cohesion);
 
     return pc;
 }
@@ -150,18 +157,34 @@ function rule3MatchVelocity(boid) {
 
     v = v.div(N-1);
     v = v.sub(boid.velocity);
-    v = v.div(8);
+    v = v.div(matchVelocityParam);
 
     return v;
 }
 
+function boidVelocity(boid) {
+    let v1 = rule1CenterMass(boid);
+    let v2 = rule2KeepDistance(boid);
+    let v3 = rule3MatchVelocity(boid);
+
+    return boid.velocity.sum(v1).sum(v2).sum(v3);
+}
+
+function leaderVelocity(boid) {
+    let vx = Math.random() * (Math.random() > 0.5 ? 1 : -1);
+    let vy = Math.random() * (Math.random() > 0.5 ? 1 : -1);
+
+    return new Vector(vx, vy).mul(maxSpeed / 4);
+}
+
 function moveBoids() {
     boids.forEach(b => {
-        let v1 = rule1CenterMass(b);
-        let v2 = rule2KeepDistance(b);
-        let v3 = rule3MatchVelocity(b);
 
-        b.velocity = b.velocity.sum(v1).sum(v2).sum(v3);
+        let velocity = b.leader ? 
+            leaderVelocity(b) :
+            boidVelocity(b);
+
+        b.velocity = b.velocity.sum(velocity);
         b.velocity = limitSpeed(b.velocity);
 
         boundPosition(b);
