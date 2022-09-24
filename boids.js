@@ -1,6 +1,6 @@
 
 let boids = [];
-let N = 1000;
+let N = 2;
 let distanceFlock = 100;
 
 class Vector {
@@ -46,11 +46,14 @@ class Vector {
 class Boid {
 
     constructor() {
-        let x = Math.random() * window.innerWidth;
-        let y = Math.random() * window.innerHeight;
+        let x = window.innerWidth / 2;
+        let y = window.innerHeight / 2;
 
         this.position = new Vector(x, y);
-        this.velocity = new Vector(0.05, 0.05);
+
+        let vx = Math.random() * (Math.random() > 0.5 ? 1 : -1) / 100;
+        let vy = Math.random() * (Math.random() > 0.5 ? 1 : -1) / 100;
+        this.velocity = new Vector(vx, vy);
     }
 
     move(v) {
@@ -68,7 +71,7 @@ class Boid {
 
 
 function createBoids() {
-    for (let i = 0; i < N; i++) {
+    for (let i = 0; i <= N; i++) {
         boids.push(new Boid());
     }
 }
@@ -97,10 +100,10 @@ function rule1CenterMass(boid) {
         if (b != boid) {
             pc = pc.sum(b.position)
         }
-
-        pc = pc.div(N - 1);
-        pc = pc.sub(boid).div(100);
     })
+
+    pc = pc.div(N - 1);
+    pc = pc.sub(boid.position).div(100);
 
     return pc;
 }
@@ -132,7 +135,7 @@ function rule3MatchVelocity(boid) {
     })
 
     v = v.div(N-1);
-    v = v.sub(boid);
+    v = v.sub(boid.velocity);
     v = v.div(8);
 
     return v;
