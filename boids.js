@@ -1,9 +1,11 @@
 
 let boids = [];
-let N = 2;
-let distanceFlock = 100;
+let N = 1000;
+let distanceFlock = 5;
+let maxSpeed = 2;
 
 class Vector {
+
     constructor(x, y) {
         this.x = x || 0;
         this.y = y || 0;
@@ -46,13 +48,14 @@ class Vector {
 class Boid {
 
     constructor() {
-        let x = window.innerWidth / 2;
-        let y = window.innerHeight / 2;
+        let x = window.innerWidth * Math.random();
+        let y = window.innerHeight * Math.random();
 
         this.position = new Vector(x, y);
 
         let vx = Math.random() * (Math.random() > 0.5 ? 1 : -1) / 100;
         let vy = Math.random() * (Math.random() > 0.5 ? 1 : -1) / 100;
+
         this.velocity = new Vector(vx, vy);
     }
 
@@ -71,9 +74,18 @@ class Boid {
 
 
 function createBoids() {
-    for (let i = 0; i <= N; i++) {
+    for (let i = 0; i < N; i++) {
         boids.push(new Boid());
     }
+    /*let b = new Boid();
+    b.position = new Vector(100, 100);
+    b.velocity = new Vector(-1, -1);
+
+    let a = new Boid();
+    a.position = new Vector(200, 500);
+    a.velocity = new Vector(-1, 1);
+    boids.push(b);
+    boids.push(a);*/
 }
 
 
@@ -87,7 +99,8 @@ function setup() {
 
 
 function drawBoids() {
-    boids.forEach(b => {
+    boids.forEach((b, i) => {
+        console.log("Boid " + i + " x:" + b.position.x + " y:" + b.position.y)
         point(b.position.x, b.position.y);
     })
 }
@@ -102,6 +115,7 @@ function rule1CenterMass(boid) {
         }
     })
 
+    
     pc = pc.div(N - 1);
     pc = pc.sub(boid.position).div(100);
 
@@ -148,8 +162,40 @@ function moveBoids() {
         let v3 = rule3MatchVelocity(b);
 
         b.velocity = b.velocity.sum(v1).sum(v2).sum(v3);
+        b.velocity = limitSpeed(b.velocity);
+
+        boundPosition(b);
         b.position = b.position.sum(b.velocity);
     });
+}
+
+function limitSpeed(velocity) {
+    let speed = velocity.magnitude();
+    
+    if (speed < maxSpeed) {
+        return velocity;
+    }
+
+    return velocity.div(speed).mul(maxSpeed);
+}
+
+function boundPosition(boid) {
+    let position = boid.position;
+    let velocity = boid.velocity;
+
+    let maxXReached = position.x >= window.innerWidth && velocity.x > 0;
+    let minXReached = position.x <= 0 && velocity.x < 0;
+
+    if (maxXReached || minXReached) {
+        velocity.x = velocity.x * -1;
+    }
+
+    let maxYReached = position.y >= window.innerHeight && velocity.y > 0;
+    let minYReached = position.y <= 0 && velocity.y < 0;
+
+    if (maxYReached || minYReached) {
+        velocity.y = velocity.y * -1;
+    }
 }
 
 function draw() {
